@@ -11,16 +11,8 @@ else:
     from .exceptions import *
 
 class Wire:
-    def __init__(self, device, *args):
-        self.device = device
+    def __init__(self, *args):
         self.gates = list(args)
-
-        if device == "cpu":
-            self.module = np
-        elif device == "gpu":
-            self.module = cp
-        else:
-            raise DeviceError(device)
     
     def parse(self, qubit):
         output = qubit.copy()
@@ -28,7 +20,7 @@ class Wire:
             output = gate(output)
         return output
 
-class Connect:
+class Connection:
     def __init__(self, device, gate, *args):
         self.device = device
         self.gate = gate

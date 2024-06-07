@@ -1,14 +1,9 @@
 from src import quantum, gates, circuits
-from src.debugging import verify
+import numpy as np
+import engine
 
+wire = circuits.Wire(gates.Gates.hadamard(), gates.Gates.y(), gates.Gates.p(1j * np.pi/2))
+q1 = quantum.Qubit("0101010110", "gpu")
+q2 = wire.parse(q1)
 
-device = "cpu"
-
-
-q1 = quantum.Qubit("1", device)
-print(q1)
-gates = gates.Gates
-
-circuit = circuits.Wire(device, gates.y())
-q3 = circuit.parse(q1)
-print(q3)
+engine.benchmark(q1, "gpu")(wire)
