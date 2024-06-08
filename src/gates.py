@@ -44,181 +44,41 @@ class GateMatrices:
                       [0, 0, 0, 0, 0, 0, 0, 1], 
                       [0, 0, 0, 0, 0, 0, 1, 0]])
 
-class Gates:
-    @staticmethod
-    def hadamard():
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray(GateMatrices.hadamard)
-                hadamard_matrix = data.module.asarray(GateMatrices.hadamard)
+class Gate:
+    def __init__(self, matrix, partition):
+        self.matrix = matrix
+        self.partition = partition
 
-                for i in range(data.space - 1):
-                    hadamard_matrix = data.module.kron(hadamard_matrix, Matrix)
+    def __call__(self, data):
+        if not isinstance(data, q.Qubit):
+            raise InvalidType("Gate is only defined for Qubit objects.")
+        
+        matrix = data.module.asarray(self.matrix)
+        gate_matrix = data.module.asarray(self.matrix)
 
-                output = data.copy()
-                data = hadamard_matrix @ data.data
-                output.data = data
+        for i in range(int(data.space/self.partition) - 1):
+            gate_matrix = data.module.kron(gate_matrix, matrix)
 
-                return output
-        return gate
-    
-    @staticmethod
-    def x():
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray(GateMatrices.x)
-                x_matrix = data.module.asarray(GateMatrices.x)
+        output = data.copy()
+        data = gate_matrix @ data.data
+        output.data = data
 
-                for i in range(data.space - 1):
-                    x_matrix = data.module.kron(x_matrix, Matrix)
+        return output
 
-                output = data.copy()
-                data = x_matrix @ data.data
-                output.data = data
+    def extend_matrix_space(self, space):
+        output = self.matrix.copy()
+        matrix = self.matrix
+        for i in range(int(space/self.partition) - 1):
+            output = np.kron(self.matrix, matrix)
+        
+        return output
 
-                return output
-        return gate
-    
-    @staticmethod
-    def y():
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray(GateMatrices.y)
-                y_matrix = data.module.asarray(GateMatrices.y)
-
-                for i in range(data.space - 1):
-                    y_matrix = data.module.kron(y_matrix, Matrix)
-
-                output = data.copy()
-                data = y_matrix @ data.data
-                output.data = data
-
-                return output
-        return gate
-    
-    @staticmethod
-    def z():
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray(GateMatrices.z)
-                z_matrix = data.module.asarray(GateMatrices.z)
-
-                for i in range(data.space - 1):
-                    z_matrix = data.module.kron(z_matrix, Matrix)
-
-                output = data.copy()
-                data = z_matrix @ data.data
-                output.data = data
-
-                return output
-        return gate
-    
-    @staticmethod
-    def p(phi):
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray([[1, 0], [0, np.exp(1j * phi)]])
-                p_matrix = data.module.asarray([[1, 0], [0, np.exp(1j * phi)]])
-
-                for i in range(data.space - 1):
-                    p_matrix = data.module.kron(p_matrix, Matrix)
-
-                output = data.copy()
-                data = p_matrix @ data.data
-                output.data = data
-
-                return output
-        return gate
-    
-    @staticmethod
-    def t():
-        def gate(data):
-            if isinstance(data, q.Qubit):
-                Matrix = data.module.asarray(GateMatrices.t)
-                t_matrix = data.module.asarray(GateMatrices.t)
-
-                for i in range(data.space - 1):
-                    t_matrix = data.module.kron(t_matrix, Matrix)
-
-                output = data.copy()
-                data = t_matrix @ data.data
-                output.data = data
-
-                return output
-        return gate
-    
-    @staticmethod
-    def swap():
-        def gate(data):
-            if not isinstance(data, q.Qubit):
-                raise InvalidType("Swap gate is only defined for Qubit objects.")
-
-            if data.space < 2:
-                raise InvalidGate("CNOT gate is not defined for less than 2 qubits.")
-
-            if data.space % 2  != 0:
-                raise InvalidGate("Swap gate is not defined for odd number of qubits.")
-            
-            Matrix = data.module.asarray(GateMatrices.swap)
-            swap_matrix = data.module.asarray(GateMatrices.swap)
-
-            for i in range(int(data.space / 2) - 1):
-                swap_matrix = data.module.kron(swap_matrix, Matrix)
-
-            output = data.copy()
-            data = swap_matrix @ data.data
-            output.data = data
-
-            return output
-        return gate
-
-    @staticmethod
-    def cnot():
-        def gate(data):
-            if not isinstance(data, q.Qubit):
-                raise InvalidType("CNOT gate is only defined for Qubit objects.")
-
-            if data.space < 2:
-                raise InvalidGate("CNOT gate is not defined for less than 2 qubits.")
-            
-            if data.space % 2  != 0:
-                raise InvalidGate("CNOT gate is not defined for odd number of qubits.")
-            
-            Matrix = data.module.asarray(GateMatrices.cnot)
-            cnot_matrix = data.module.asarray(GateMatrices.cnot)
-
-            for i in range(int(data.space / 2) - 1):
-                cnot_matrix = data.module.kron(cnot_matrix, Matrix)
-
-
-            output = data.copy()
-            data = cnot_matrix @ data.data
-            output.data = data
-
-            return output
-        return gate
-    
-    @staticmethod
-    def ccnot():
-        def gate(data):
-            if not isinstance(data, q.Qubit):
-                raise InvalidType("CCNOT gate is only defined for Qubit objects.")
-            
-            if data.space < 3:
-                raise InvalidGate("CCNOT gate is not defined for less than 3 qubits.")
-            
-            if data.space % 3  != 0:
-                raise InvalidGate("CCNOT gate is not defined for non-3-factorable number of qubits.")
-            
-            Matrix = data.module.asarray(GateMatrices.ccnot)
-            ccnot_matrix = data.module.asarray(GateMatrices.ccnot)
-
-            for i in range(int(data.space / 3) - 1):
-                ccnot_matrix = data.module.kron(ccnot_matrix, Matrix)
-
-            output = data.copy()
-            data = ccnot_matrix @ data.data
-            output.data = data
-
-            return output
-        return gate
+hadamard = Gate(GateMatrices.hadamard, 1)
+x = Gate(GateMatrices.x, 1)
+y = Gate(GateMatrices.y, 1)
+z = Gate(GateMatrices.z, 1)
+t = Gate(GateMatrices.t, 1)
+cnot = Gate(GateMatrices.cnot, 2)
+cz = Gate(GateMatrices.cz, 2)
+swap = Gate(GateMatrices.swap, 2)
+ccnot = Gate(GateMatrices.ccnot, 3)

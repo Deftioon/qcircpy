@@ -11,7 +11,7 @@ class IncompatibleShapes(Exception):
         self.shape2 = shape2
 
     def __str__(self):
-        return f"IncompatibleShapes: Qubit Spaces {self.shape1.space} and {self.shape2.space} are incompatible."
+        return f"IncompatibleShapes: Qubit Spaces {self.shape1} and {self.shape2} are incompatible."
 
 class InvalidType(Exception):
     def __init__(self, string):

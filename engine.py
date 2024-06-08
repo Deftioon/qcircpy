@@ -7,12 +7,13 @@ def run(qubit, device):
             return wire.parse(qubit)
     return execute
 
-def benchmark(data, device):
+def benchmark(data, device, clock):
     @timer
     def execute(wire):
         if isinstance(wire, circuits.Wire):
             qubit = data.to_device(device)
-            print(f"Wire took {len(wire.gates)} gates.", end = " ")
+            gates = len(wire.gates)
+            print(f"Wire took {gates} gates. At {clock}Hz, it will take {gates/clock}s.", end = " ")
             return wire.parse(qubit)
     return execute
 
