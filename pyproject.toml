@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyQ"
+version = "0.0.1"
+authors = [
+  {name="Jake Lu", email="jylu1205@outlook.com"},
+]
+description = "A package for Python Quantum Circuit Simulation and Benchmarking"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: BSD-2-Clause",
+    "Operating System :: OS Independent",
+]
+dependencies=[
+    "numpy",
+    "cupy",
+]
+license = { file = "LICENSE" }
+keywords = ["quantum", "circuit", "simulation", "benchmarking"]
+
+[project.urls]
+Homepage = "https://github.com/Deftioon/PyQ"
+Issues = "https://github.com/Deftioon/PyQ/issues"

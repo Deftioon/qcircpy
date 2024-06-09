@@ -1,5 +1,5 @@
-from src import quantum, gates, circuits
-from src.exceptions import *
+import quantum, gates, circuits
+from exceptions import *
 import time
 
 class Engine:

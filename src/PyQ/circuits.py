@@ -1,6 +1,5 @@
 import numpy as np
 import cupy as cp
-import typing
 
 if __name__ == "__main__":
     import quantum as q
