@@ -1,12 +1,11 @@
-from src import quantum, gates, circuits
-from src.debugging import *
-import numpy as np
-import engine
+from engine import *
 
-wire = circuits.Wire(gates.hadamard, gates.x, gates.y, gates.z, gates.t)
-q1 = quantum.Qubit("01", "cpu")
-q2 = wire.parse(q1)
+GPU_Engine = Engine("gpu", 100)
+CPU_Engine = Engine("cpu", 100)
 
-benchmarker = engine.benchmark(q1, "cpu", 10)
-q3 = benchmarker(wire)
-print(verify(q3))
+engine = CPU_Engine
+
+q1 = engine.Qubit("01")
+w1 = engine.Wire(hadamard, x, y, z, t)
+w2 = engine.Wire(hadamard, y, z, x) 
+c1 = engine.Connection(cnot, w1, w2)

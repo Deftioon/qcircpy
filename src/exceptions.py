@@ -12,6 +12,13 @@ class IncompatibleShapes(Exception):
 
     def __str__(self):
         return f"IncompatibleShapes: Qubit Spaces {self.shape1} and {self.shape2} are incompatible."
+    
+class ConnectionError(Exception):
+    def __init__(self, string):
+        self.string = string
+
+    def __str__(self):
+        return f"ConnectionError: {self.string}"
 
 class InvalidType(Exception):
     def __init__(self, string):
