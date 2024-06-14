@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["QuantPy"]
+packages = ["qcircpy"]
 package-dir = { "" = "src" }
 
 [project]
-name = "quantpy"
+name = "qcircpy"
 version = "0.0.11"
 authors = [
   {name="Jake Lu", email="jylu1205@outlook.com"},
@@ -33,5 +33,5 @@ license = { file = "LICENSE" }
 keywords = ["quantum", "circuit", "simulation", "benchmarking"]
 
 [project.urls]
-Homepage = "https://github.com/Deftioon/QuantPy"
-Issues = "https://github.com/Deftioon/QuantPy/issues"
+Homepage = "https://github.com/Deftioon/qcircpy"
+Issues = "https://github.com/Deftioon/qcircpy/issues"
