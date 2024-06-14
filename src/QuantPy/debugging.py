@@ -1,7 +1,5 @@
 import math
 
-import math
-
 def verify(qubit):
     """
     Verify if the given qubit is valid.

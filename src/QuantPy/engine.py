@@ -1,5 +1,10 @@
-import quantum, gates, circuits
-from exceptions import *
+if __name__ == "__main__":
+    import quantum, gates, circuits
+    from exceptions import *
+else:
+    from . import quantum, gates, circuits
+    from .exceptions import *
+    
 import time
 
 class Engine:

@@ -12,6 +12,8 @@ else:
 
 
 class GateMatrices:
+    identity = np.array([[1, 0], [0, 1]])
+
     hadamard = 1 / np.sqrt(2) * np.array([[1, 1], [1, -1]])
 
     x = np.array([[0, 1], [1, 0]])
@@ -73,6 +75,7 @@ class Gate:
         
         return output
 
+identity = Gate(GateMatrices.identity, 1)
 hadamard = Gate(GateMatrices.hadamard, 1)
 x = Gate(GateMatrices.x, 1)
 y = Gate(GateMatrices.y, 1)
