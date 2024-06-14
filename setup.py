@@ -11,6 +11,6 @@ setup(name="Py-Q",
       description="Quantum Circuit Benchmarking", 
       long_description=long_description, 
       long_description_content_type="text/markdown", 
-      url="https://github.com/Deftioon/PyQ", 
+      url="https://github.com/Deftioon/QuantPy", 
       packages=find_packages(), 
-      python_requires=">=3.9", )
+      python_requires=">=3.11", )
