@@ -6,8 +6,8 @@ here = pathlib.Path(__file__).parent.resolve()
 # Get the long description from the README file
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
-setup(name="Py-Q", 
-      version="1.0.0", 
+setup(name="QuantPy", 
+      version="0.0.2", 
       description="Quantum Circuit Benchmarking", 
       long_description=long_description, 
       long_description_content_type="text/markdown", 

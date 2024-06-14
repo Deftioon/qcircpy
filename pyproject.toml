@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QuantPy"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
   {name="Jake Lu", email="jylu1205@outlook.com"},
 ]
@@ -12,13 +12,16 @@ description = "A package for Python Quantum Circuit Simulation and Benchmarking"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
+    "Environment :: GPU :: NVIDIA CUDA :: 11",
+    "Environment :: GPU :: NVIDIA CUDA :: 12",
+    "Natural Language :: English",
 ]
 dependencies=[
     "numpy",
-    "cupy",
 ]
 license = { file = "LICENSE" }
 keywords = ["quantum", "circuit", "simulation", "benchmarking"]
