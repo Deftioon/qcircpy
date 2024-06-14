@@ -8,7 +8,7 @@ package-dir = { "" = "src" }
 
 [project]
 name = "qcircpy"
-version = "0.0.11"
+version = "0.1.0"
 authors = [
   {name="Jake Lu", email="jylu1205@outlook.com"},
 ]
@@ -26,8 +26,6 @@ classifiers = [
 ]
 dependencies=[
     "numpy",
-    "cupy-cuda11x",
-    "cupy-cuda12x",
 ]
 license = { file = "LICENSE" }
 keywords = ["quantum", "circuit", "simulation", "benchmarking"]
