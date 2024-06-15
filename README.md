@@ -1,5 +1,9 @@
 # QCircPy
-QCircPy is a Quantum Computer Simulation and Benchmarking package on Python with GPU and CPU flexibility and performance. It allows the user to benchmark and run simple Quantum Circuits on a GPU or CPU with `numpy` and `cupy`
+
+QCircPy is a Quantum Computer Simulation and Benchmarking package on Python with GPU and CPU flexibility and performance. It allows the user to benchmark and run simple Quantum Circuits on a GPU or CPU with `numpy` and `cupy`.
+
+This project is for educational purposes.
+
 
 
 
@@ -58,4 +62,3 @@ import qcircpy.engine as qp
 ```
 
 Detailed usage can be found in [USAGE.md](USAGE.md)
-

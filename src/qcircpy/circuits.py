@@ -1,13 +1,16 @@
 import numpy as np
 import cupy as cp
+import typing
 
 if __name__ == "__main__":
     import quantum as q
     from exceptions import *
+    import gates as g
 
 else:
     from . import quantum as q
     from .exceptions import *
+    from . import gates as g
 
 class Wire:
     """
@@ -21,14 +24,14 @@ class Wire:
         parse(qubit): Applies a series of quantum gates to a qubit.
 
     """
-    def __init__(self, *args):
+    def __init__(self, *args: g.Gate) -> None:
         self.gates = args
         self.matrix = None
     
-    def __call__(self, qubit):
+    def __call__(self, qubit: q.Qubit) -> None:
         return self.parse(qubit)
 
-    def init_matrix(self, space, device):
+    def init_matrix(self, space: int, device: str) -> None:
         if device == "cpu":
             module = np
         elif device == "gpu":
@@ -39,7 +42,7 @@ class Wire:
             self.matrix = module.asarray(gate.extend_matrix_space(space)) @ self.matrix
 
     
-    def parse(self, qubit):
+    def parse(self, qubit: q.Qubit) -> q.Qubit:
         '''
         Applies a series of quantum gates to a qubit.
 
@@ -58,7 +61,7 @@ class Wire:
         return output
 
 class Connection:
-    def __init__(self, device, gate, *args):
+    def __init__(self, device: str, gate: g.Gate, *args: Wire) -> None:
         self.device = device
         self.gate = gate
         self.wires = list(args)
@@ -88,10 +91,10 @@ class Connection:
         
         self.matrix = self.matrix @ self.module.asarray(gate.matrix)
     
-    def __call__(self, qubit):
+    def __call__(self, qubit: q.Qubit) -> q.Qubit:
         return self.parse(qubit)
     
-    def to_device(self, device):
+    def to_device(self, device: str):
         if device == "cpu" and self.module == cp:
             self.matrix = cp.asnumpy(self.matrix)
             self.module = np
@@ -103,7 +106,7 @@ class Connection:
         
         return self
     
-    def parse(self, qubit):
+    def parse(self, qubit: q.Qubit) -> q.Qubit:
         if not isinstance(qubit, q.Qubit):
             raise InvalidType("Connection is only defined for Qubit objects.")
         

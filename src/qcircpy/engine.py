@@ -6,6 +6,7 @@ else:
     from .exceptions import *
     
 import time
+import typing
 
 class Engine:
     """
@@ -32,7 +33,7 @@ class Engine:
         ccnot: The doubly-controlled-NOT gate.
     """
 
-    def __init__(self, device, clock):
+    def __init__(self, device: str, clock: int):
         self.device = device
         self.clock = clock
 
@@ -49,7 +50,7 @@ class Engine:
         self.swap = gates.swap
         self.ccnot = gates.ccnot
 
-    def Qubit(self, base_state):
+    def Qubit(self, base_state: str) -> quantum.Qubit:
         """
         Create a qubit with the given base state.
 
@@ -61,7 +62,7 @@ class Engine:
         """
         return quantum.Qubit(base_state, self.device)
     
-    def Wire(self, *args):
+    def Wire(self, *args: gates.Gate) -> circuits.Wire:
         """
         Create a wire with the given gates.
 
@@ -73,7 +74,7 @@ class Engine:
         """
         return circuits.Wire(*args)
     
-    def Connection(self, gate, *args):
+    def Connection(self, gate: gates.Gate, *args: circuits.Wire):
         """
         Create a connection with the given gate and wires.
 
@@ -86,7 +87,7 @@ class Engine:
         """
         return circuits.Connection(self.device, gate, *args)
     
-    def hadamard(self):
+    def hadamard(self) -> gates.Gate:
         """
         Get the Hadamard gate.
 
@@ -95,7 +96,7 @@ class Engine:
         """
         return gates.hadamard
     
-    def x(self):
+    def x(self) -> gates.Gate:
         """
         Get the Pauli-X gate.
 
@@ -104,7 +105,7 @@ class Engine:
         """
         return gates.x
     
-    def y(self):
+    def y(self) -> gates.Gate:
         """
         Get the Pauli-Y gate.
 
@@ -113,7 +114,7 @@ class Engine:
         """
         return gates.y
     
-    def z(self):
+    def z(self) -> gates.Gate:
         """
         Get the Pauli-Z gate.
 
@@ -122,7 +123,7 @@ class Engine:
         """
         return gates.z
     
-    def t(self):
+    def t(self) -> gates.Gate:
         """
         Get the T gate.
 
@@ -131,7 +132,7 @@ class Engine:
         """
         return gates.t
     
-    def cnot(self):
+    def cnot(self) -> gates.Gate:
         """
         Get the controlled-NOT gate.
 
@@ -140,7 +141,7 @@ class Engine:
         """
         return gates.cnot
     
-    def cz(self):
+    def cz(self) -> gates.Gate:
         """
         Get the controlled-Z gate.
 
@@ -149,7 +150,7 @@ class Engine:
         """
         return gates.cz
     
-    def swap(self):
+    def swap(self) -> gates.Gate:
         """
         Get the SWAP gate.
 
@@ -158,7 +159,7 @@ class Engine:
         """
         return gates.swap
     
-    def ccnot(self):
+    def ccnot(self) -> gates.Gate:
         """
         Get the doubly-controlled-NOT gate.
 
@@ -167,7 +168,7 @@ class Engine:
         """
         return gates.ccnot
 
-    def run(self, circuit):
+    def run(self, circuit: circuits.Wire | circuits.Connection) -> function:
         """
         Execute the given circuit.
 
@@ -177,14 +178,14 @@ class Engine:
         Returns:
             function: The execute function.
         """
-        def execute(data):
+        def execute(data: quantum.Qubit) -> quantum.Qubit:
             if isinstance(circuit, circuits.Wire):
                 qubit = data.to_device(self.device)
                 gates = len(circuit.gates)
                 return circuit.parse(qubit)
         return execute
 
-    def benchmark(self, circuit):
+    def benchmark(self, circuit: circuits.Wire | circuits.Connection) -> function:
         """
         Execute the given circuit and print benchmark information.
 
@@ -195,7 +196,7 @@ class Engine:
             function: The execute function.
         """
         @timer
-        def execute(data):
+        def execute(data: quantum.Qubit) -> quantum.Qubit:
             if isinstance(circuit, circuits.Wire):
                 qubit = data.to_device(self.device)
                 gates = len(circuit.gates)

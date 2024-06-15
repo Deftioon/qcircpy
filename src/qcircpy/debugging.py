@@ -1,6 +1,11 @@
 import math
 
-def verify(qubit):
+if __name__ == "__main__":
+    import quantum
+else:
+    from . import quantum
+
+def verify(qubit: quantum.Qubit) -> bool:
     """
     Verify if the given qubit is valid.
 
