@@ -24,22 +24,43 @@ class Wire:
         parse(qubit): Applies a series of quantum gates to a qubit.
 
     """
-    def __init__(self, *args: g.Gate) -> None:
-        self.gates = args
+    def __init__(self, device: str, *args: g.Gate) -> None:
+        self.device = device
+        self.gates = list(args)
         self.matrix = None
+
+        if device == "cpu":
+            self.module = np
+        elif device == "gpu":
+            self.module = cp
+        else:
+            raise DeviceError(device)
+        
+        for i, gate in enumerate(self.gates):
+            if not isinstance(gate, g.Gate):
+                raise InvalidType("Wire only accepts Gate objects.")
+            
+            if gate.device != self.device:
+                self.gates[i] = gate.to_device(self.device)
+            
+        self.matrix = self.module.asarray(self.gates[-1])
+        for gate in self.gates[:-1]:
+            self.matrix = self.module.asarray(gate) @ self.matrix
     
     def __call__(self, qubit: q.Qubit) -> None:
         return self.parse(qubit)
-
-    def init_matrix(self, space: int, device: str) -> None:
-        if device == "cpu":
-            module = np
-        elif device == "gpu":
-            module = cp
+    
+    def to_device(self, device: str):
+        if device == "cpu" and self.module == cp:
+            self.matrix = cp.asnumpy(self.matrix)
+            self.module = np
+        elif device == "gpu" and self.module == np:
+            self.matrix = cp.asarray(self.matrix)
+            self.module = cp
+        elif device != "cpu" and device != "gpu":
+            raise DeviceError(device)
         
-        self.matrix = module.asarray(self.gates[-1].extend_matrix_space(space))
-        for gate in self.gates[:-1]:
-            self.matrix = module.asarray(gate.extend_matrix_space(space)) @ self.matrix
+        return self
 
     
     def parse(self, qubit: q.Qubit) -> q.Qubit:
@@ -51,11 +72,7 @@ class Wire:
 
         Returns:
             Qubit: The output qubit after applying the gates.
-        '''
-        self.matrix = qubit.module.asarray(self.gates[-1].extend_matrix_space(qubit.space))
-        for gate in self.gates[:-1]:
-            self.matrix = qubit.module.asarray(gate.extend_matrix_space(qubit.space)) @ self.matrix
-        
+        '''           
         output = qubit.copy()
         output.data = self.matrix @ output.data
         return output
@@ -65,6 +82,7 @@ class Connection:
         self.device = device
         self.gate = gate
         self.wires = list(args)
+        self.matrix = None
 
         if device == "cpu":
             self.module = np
@@ -73,8 +91,8 @@ class Connection:
         else:
             raise DeviceError(device)
         
-        self.in_channels = self.module.log2(gate.matrix.shape[0])
-        self.out_channels = self.module.log2(gate.matrix.shape[1])
+        self.in_channels: int = int(self.module.log2(gate.matrix.shape[0]))
+        self.out_channels: int = int(self.module.log2(gate.matrix.shape[1]))
         
         if self.module.log2(gate.matrix.shape[0]) != len(self.wires):
             raise IncompatibleShapes(len(self.wires), self.module.log2(gate.matrix.shape[0]))

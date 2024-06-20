@@ -3,11 +3,11 @@ import numpy as np
 import cupy as cp
 
 if __name__ == "__main__":
-    from exceptions import *
+    import exceptions as e
     from debugging import *
 
 else:
-    from .exceptions import *
+    from . import exceptions as e  
     from .debugging import *
 
 import numpy as np
@@ -26,7 +26,7 @@ class Qubit:
         data (ndarray): The state vector of the qubit.
     """
     
-    def __init__(self, base_state: str, device: str):
+    def __init__(self, base_state: str, device: str) -> None:
         """
         Initializes a qubit with the given base state and device.
         
@@ -44,7 +44,7 @@ class Qubit:
         elif device == "gpu":
             self.module = cp
         else:
-            raise DeviceError(device)
+            raise e.DeviceError(device)
 
         self.space = len(base_state)
         self.width = 2 ** self.space
@@ -52,7 +52,7 @@ class Qubit:
         self.data = self.module.zeros((self.width, 1), dtype=np.cfloat)
         self.data[int(base_state, 2)] = 1
     
-    def to_device(self, device):
+    def to_device(self, device: str):
         """
         Transfers the qubit to the specified device.
         
@@ -66,13 +66,13 @@ class Qubit:
             DeviceError: If an invalid device is provided.
         """
         if device == "cpu" and self.module == cp:
-            self.data = cp.asnumpy(self.data)
+            self.data: np.ndarray = cp.asnumpy(self.data)
             self.module = np
         elif device == "gpu" and self.module == np:
-            self.data = cp.asarray(self.data)
+            self.data: cp.ndarray = cp.asarray(self.data)
             self.module = cp
         elif device != "cpu" and device != "gpu":
-            raise DeviceError(device)
+            raise e.DeviceError(device)
         
         return self
     
@@ -133,7 +133,7 @@ class QRAM:
 
     """
 
-    def __init__(self, device: str, *args):
+    def __init__(self, device: str, *args: Qubit):
         self.device = device
         self.qubits = list(args)
         self.address_lengths = []
@@ -143,7 +143,7 @@ class QRAM:
         elif device == "gpu":
             self.module = cp
         else:
-            raise DeviceError(device)
+            raise e.DeviceError(device)
         
         self.data = self.module.zeros((2, 1), dtype=np.cfloat)
     
@@ -157,7 +157,7 @@ class QRAM:
             self.address_lengths.append(qubit.space)
             self.data = np.vstack((self.data, qubit.data))
 
-    def store(self, *args):
+    def store(self, *args: Qubit):
         """
         Stores additional qubits in the QRAM.
 
@@ -170,7 +170,7 @@ class QRAM:
         
         self.init()
 
-    def fetch(self, address):
+    def fetch(self, address: int):
         """
         Fetches a qubit from the QRAM based on the given address.
 
@@ -183,7 +183,7 @@ class QRAM:
         """
         return self.qubits[address]
 
-    def delete(self, address):
+    def delete(self, address: int):
         """
         Deletes a qubit from the QRAM based on the given address.
 

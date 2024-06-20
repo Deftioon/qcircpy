@@ -39,16 +39,6 @@ class Engine:
 
         if device != "cpu" and device != "gpu":
             raise DeviceError(device)
-        
-        self.hadamard = gates.hadamard
-        self.x = gates.x
-        self.y = gates.y
-        self.z = gates.z
-        self.t = gates.t
-        self.cnot = gates.cnot
-        self.cz = gates.cz
-        self.swap = gates.swap
-        self.ccnot = gates.ccnot
 
     def Qubit(self, base_state: str) -> quantum.Qubit:
         """
@@ -94,7 +84,7 @@ class Engine:
         Returns:
             The Hadamard gate.
         """
-        return gates.hadamard
+        return gates.GATE_DICT[self.device]["hadamard"]
     
     def x(self) -> gates.Gate:
         """
@@ -103,7 +93,7 @@ class Engine:
         Returns:
             The Pauli-X gate.
         """
-        return gates.x
+        return gates.GATE_DICT[self.device]["x"]
     
     def y(self) -> gates.Gate:
         """
@@ -112,7 +102,7 @@ class Engine:
         Returns:
             The Pauli-Y gate.
         """
-        return gates.y
+        return gates.GATE_DICT[self.device]["y"]
     
     def z(self) -> gates.Gate:
         """
@@ -121,7 +111,7 @@ class Engine:
         Returns:
             The Pauli-Z gate.
         """
-        return gates.z
+        return gates.GATE_DICT[self.device]["z"]
     
     def t(self) -> gates.Gate:
         """
@@ -130,7 +120,7 @@ class Engine:
         Returns:
             The T gate.
         """
-        return gates.t
+        return gates.GATE_DICT[self.device]["t"]
     
     def cnot(self) -> gates.Gate:
         """
@@ -139,7 +129,7 @@ class Engine:
         Returns:
             The controlled-NOT gate.
         """
-        return gates.cnot
+        return gates.GATE_DICT[self.device]["cnot"]
     
     def cz(self) -> gates.Gate:
         """
@@ -148,7 +138,7 @@ class Engine:
         Returns:
             The controlled-Z gate.
         """
-        return gates.cz
+        return gates.GATE_DICT[self.device]["cz"]
     
     def swap(self) -> gates.Gate:
         """
@@ -157,7 +147,7 @@ class Engine:
         Returns:
             The SWAP gate.
         """
-        return gates.swap
+        return gates.GATE_DICT[self.device]["swap"]
     
     def ccnot(self) -> gates.Gate:
         """
@@ -166,7 +156,7 @@ class Engine:
         Returns:
             The doubly-controlled-NOT gate.
         """
-        return gates.ccnot
+        return gates.GATE_DICT[self.device]["ccnot"]
 
     def run(self, circuit: circuits.Wire | circuits.Connection) -> function:
         """
@@ -178,11 +168,10 @@ class Engine:
         Returns:
             function: The execute function.
         """
-        def execute(data: quantum.Qubit) -> quantum.Qubit:
-            if isinstance(circuit, circuits.Wire):
-                qubit = data.to_device(self.device)
-                gates = len(circuit.gates)
-                return circuit.parse(qubit)
+        def execute(data: quantum.Qubit) -> quantum.Qubit | None:
+            qubit = data.to_device(self.device)
+            circ = circuit.to_device(self.device)
+            return circuit.parse(qubit)
         return execute
 
     def benchmark(self, circuit: circuits.Wire | circuits.Connection) -> function:
@@ -210,16 +199,6 @@ class Engine:
                 print(f"Connection took {gates} wires, each of {[len(i.gates) for i in qcirc.wires]}. At {self.clock}Hz, it will take {gates/self.clock: .2f}s.", end = " ")
                 return qcirc.parse(qubit)
         return execute
-    
-hadamard = gates.hadamard
-x = gates.x
-y = gates.y
-z = gates.z
-t = gates.t
-cnot = gates.cnot
-cz = gates.cz
-swap = gates.swap
-ccnot = gates.ccnot
 
 def timer(func):
     def new_func(*args, **kwargs):
