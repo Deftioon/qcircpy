@@ -113,11 +113,11 @@ class Gate:
 
         """
         output = self.matrix.copy()
-        matrix = self.matrix
+        matrix = self.matrix.copy()
         for i in range(int(space/self.partition) - 1):
             output = np.kron(self.matrix, matrix)
 
-        return output
+        return Gate(output, self.partition, self.device)
 
     def to_device(self, device: str):
         """

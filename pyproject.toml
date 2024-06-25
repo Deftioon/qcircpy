@@ -8,7 +8,7 @@ package-dir = { "" = "src" }
 
 [project]
 name = "qcircpy"
-version = "0.1.0"
+version = "0.2.2"
 authors = [
   {name="Jake Lu", email="jylu1205@outlook.com"},
 ]

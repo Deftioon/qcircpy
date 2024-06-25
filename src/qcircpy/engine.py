@@ -62,7 +62,7 @@ class Engine:
         Returns:
             circuits.Wire: The created wire.
         """
-        return circuits.Wire(*args)
+        return circuits.Wire(self.device, *args)
     
     def Connection(self, gate: gates.Gate, *args: circuits.Wire):
         """
@@ -77,88 +77,97 @@ class Engine:
         """
         return circuits.Connection(self.device, gate, *args)
     
-    def hadamard(self) -> gates.Gate:
+    def hadamard(self, space: int = 1) -> gates.Gate:
         """
         Get the Hadamard gate.
 
         Returns:
             The Hadamard gate.
         """
-        return gates.GATE_DICT[self.device]["hadamard"]
+        return gates.GATE_DICT[self.device]["hadamard"].extend_matrix_space(space)
     
-    def x(self) -> gates.Gate:
+    def x(self, space: int = 1) -> gates.Gate:
         """
         Get the Pauli-X gate.
 
         Returns:
             The Pauli-X gate.
         """
-        return gates.GATE_DICT[self.device]["x"]
+        return gates.GATE_DICT[self.device]["x"].extend_matrix_space(space)
     
-    def y(self) -> gates.Gate:
+    def y(self, space: int = 1) -> gates.Gate:
         """
         Get the Pauli-Y gate.
 
         Returns:
             The Pauli-Y gate.
         """
-        return gates.GATE_DICT[self.device]["y"]
+        return gates.GATE_DICT[self.device]["y"].extend_matrix_space(space)
     
-    def z(self) -> gates.Gate:
+    def z(self, space: int = 1) -> gates.Gate:
         """
         Get the Pauli-Z gate.
 
         Returns:
             The Pauli-Z gate.
         """
-        return gates.GATE_DICT[self.device]["z"]
+        return gates.GATE_DICT[self.device]["z"].extend_matrix_space(space)
     
-    def t(self) -> gates.Gate:
+    def t(self, space: int = 1) -> gates.Gate:
         """
         Get the T gate.
 
         Returns:
             The T gate.
         """
-        return gates.GATE_DICT[self.device]["t"]
+        return gates.GATE_DICT[self.device]["t"].extend_matrix_space(space)
     
-    def cnot(self) -> gates.Gate:
+    def cnot(self, space: int = 2) -> gates.Gate:
         """
         Get the controlled-NOT gate.
 
         Returns:
             The controlled-NOT gate.
         """
-        return gates.GATE_DICT[self.device]["cnot"]
+        return gates.GATE_DICT[self.device]["cnot"].extend_matrix_space(space)
     
-    def cz(self) -> gates.Gate:
+    def cz(self, space: int = 2) -> gates.Gate:
         """
         Get the controlled-Z gate.
 
         Returns:
             The controlled-Z gate.
         """
-        return gates.GATE_DICT[self.device]["cz"]
+        return gates.GATE_DICT[self.device]["cz"].extend_matrix_space(space)
     
-    def swap(self) -> gates.Gate:
+    def swap(self, space: int = 2) -> gates.Gate:
         """
         Get the SWAP gate.
 
         Returns:
             The SWAP gate.
         """
-        return gates.GATE_DICT[self.device]["swap"]
+        return gates.GATE_DICT[self.device]["swap"].extend_matrix_space(space)
     
-    def ccnot(self) -> gates.Gate:
+    def ccnot(self, space: int = 3) -> gates.Gate:
         """
         Get the doubly-controlled-NOT gate.
 
         Returns:
             The doubly-controlled-NOT gate.
         """
-        return gates.GATE_DICT[self.device]["ccnot"]
+        return gates.GATE_DICT[self.device]["ccnot"].extend_matrix_space(space)
+    
+    def identity(self, space:int = 1):
+        """
+        Get the identity gate.
 
-    def run(self, circuit: circuits.Wire | circuits.Connection) -> function:
+        Returns:
+            The identity gate.
+        """
+        return gates.GATE_DICT[self.device]["identity"].extend_matrix_space(space)
+
+    def run(self, circuit: circuits.Wire | circuits.Connection):
         """
         Execute the given circuit.
 
@@ -174,7 +183,7 @@ class Engine:
             return circuit.parse(qubit)
         return execute
 
-    def benchmark(self, circuit: circuits.Wire | circuits.Connection) -> function:
+    def benchmark(self, circuit: circuits.Wire | circuits.Connection):
         """
         Execute the given circuit and print benchmark information.
 
@@ -195,7 +204,7 @@ class Engine:
             if isinstance(circuit, circuits.Connection):
                 qcirc = circuit.to_device(self.device)
                 qubit = data.to_device(self.device)
-                gates = len(qcirc.wires)
+                gates = sum([len(i.gates) for i in qcirc.wires])
                 print(f"Connection took {gates} wires, each of {[len(i.gates) for i in qcirc.wires]}. At {self.clock}Hz, it will take {gates/self.clock: .2f}s.", end = " ")
                 return qcirc.parse(qubit)
         return execute
