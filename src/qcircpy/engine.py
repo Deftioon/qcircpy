@@ -76,6 +76,18 @@ class Engine:
             circuits.Connection: The created connection.
         """
         return circuits.Connection(self.device, gate, *args)
+
+    def RAM(self, *args: quantum.Qubit):
+        """
+        Create a Quantum RAM instance with Qubits stored.
+
+        Args:
+            *args: The Qubits to be stored in the RAM.
+        
+        Returns:
+            quantum.RAM: The created RAM instance.
+        """
+        return quantum.RAM(self.device, *args)
     
     def hadamard(self, space: int = 1) -> gates.Gate:
         """

@@ -152,10 +152,10 @@ class QRAM:
     
     def init(self):
         self.address_lengths = [self.qubits[0].space]
-        self.data = self.qubits[0].data
+        self.data = self.qubits[0].to_device(self.device).data
         for qubit in self.qubits[1:]:
             self.address_lengths.append(qubit.space)
-            self.data = np.vstack((self.data, qubit.data))
+            self.data = np.vstack((self.data, qubit.to_device(self.device).data))
 
     def store(self, *args: Qubit):
         """
@@ -166,7 +166,7 @@ class QRAM:
 
         """
         for qubit in args:
-            self.qubits.append(qubit)
+            self.qubits.append(qubit.to_device(self.device))
         
         self.init()
 
