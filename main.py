@@ -1,6 +1,11 @@
 import src.qcircpy as qcircpy
+import matplotlib.pyplot as plt
 
-runtime = qcircpy.Runtime("00", "cpu")
-runtime.hadamard(0)
-runtime.cnot(0, 1)
-print(runtime.state)
+x = qcircpy.gates.GATES["cpu"]["PAULI_X"]
+
+gate = qcircpy.gates.controlled_gate(3, x, 2, 0, 1)
+print(gate.shape)
+plt.imshow(gate.real, cmap='viridis', interpolation='none')
+plt.colorbar()
+plt.title("Controlled Gate Visualization")
+plt.savefig("controlled_gate.png")

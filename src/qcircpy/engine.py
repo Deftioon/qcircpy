@@ -2,7 +2,7 @@ from .exceptions import *
 from . import gates
 
 import numpy as np
-import cupy as cp
+import matplotlib.pyplot as plt
 
 class Runtime:
     def __init__(self, state: str = "0", device: str = "cpu") -> None:
@@ -13,8 +13,6 @@ class Runtime:
             raise DeviceError(device)
         elif device == "cpu":
             self.module = np
-        elif device == "gpu":
-            self.module = cp
         
         if state[0] == "1":
             output = self.module.array([[0], [1]], dtype=complex)
@@ -30,97 +28,75 @@ class Runtime:
                 raise StateError(state)
             output = self.module.kron(output, qubit)
         
-        self.state = output
+        self.__state = output
     
     def measure(self) -> str:
-        probabilities = np.abs(self.state) ** 2
+        probabilities = np.abs(self.__state) ** 2
         probabilities = probabilities.flatten()
         output_states = [str(i) for i in range(len(probabilities))]
         output = np.random.choice(output_states, p=probabilities)
-        self.state = self.module.zeros((2 ** self.qubits, 1), dtype=complex)
-        self.state[int(output),0] = 1
-        output = bin(int(output))[2:]
+        self.__state = self.module.zeros((2 ** self.qubits, 1), dtype=complex)
+        self.__state[int(output),0] = 1
+        output = f"{bin(int(output))[2:]:0>{self.qubits}}"
         return output
 
     def measure_no_reset(self) -> str:
-        probabilities = np.abs(self.state) ** 2
+        probabilities = np.abs(self.__state) ** 2
         probabilities = probabilities.flatten()
         output_states = [str(i) for i in range(len(probabilities))]
         output = np.random.choice(output_states, p=probabilities)
-        output = bin(int(output))[2:]
+        output = f"{bin(int(output))[2:]:0>{self.qubits}}"
         return output
     
-    def hadamard(self, qubit: int) -> None:
+    def __single_qubit_gate(self, gate: np.ndarray, qubit: int) -> np.ndarray:
+        identity = self.module.identity(2, dtype=complex)
+
+        if qubit == 0:
+            applied_gate = gate
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits):
+            if i == qubit:
+                applied_gate = self.module.kron(applied_gate, gate)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        return applied_gate
+        
+    def __check_qubit(self, qubit: int) -> None:
         if qubit < 0 or qubit >= self.qubits:
             raise StateError(str(qubit))
+    
+    def get_state(self) -> np.ndarray:
+        return self.__state
+
+    def gate(self, gate: np.ndarray, qubit: int) -> None:
+        self.__check_qubit(qubit)
+        
+        self.__state = self.__single_qubit_gate(gate, qubit) @ self.__state
+    
+    def hadamard(self, qubit: int) -> None:
+        self.__check_qubit(qubit)
         
         hadamard = gates.GATES[self.device]["HADAMARD"]
-        identity = self.module.identity(2, dtype=complex)
-
-        if qubit == 0:
-            applied_gate = hadamard
-        else:
-            applied_gate = identity
-        for i in range(1, self.qubits):
-            if i == qubit:
-                applied_gate = self.module.kron(applied_gate, hadamard)
-            else:
-                applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = self.__single_qubit_gate(hadamard, qubit) @ self.__state
     
     def pauli_x(self, qubit: int) -> None:
-        if qubit < 0 or qubit >= self.qubits:
-            raise StateError(str(qubit))
+        self.__check_qubit(qubit)
         
         pauli_x = gates.GATES[self.device]["PAULI_X"]
-        identity = self.module.identity(2, dtype=complex)
-
-        if qubit == 0:
-            applied_gate = pauli_x
-        else:
-            applied_gate = identity
-        for i in range(1, self.qubits):
-            if i == qubit:
-                applied_gate = self.module.kron(applied_gate, pauli_x)
-            else:
-                applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = self.__single_qubit_gate(pauli_x, qubit) @ self.__state
     
     def pauli_y(self, qubit: int) -> None:
-        if qubit < 0 or qubit >= self.qubits:
-            raise StateError(str(qubit))
+        self.__check_qubit(qubit)
         
         pauli_y = gates.GATES[self.device]["PAULI_Y"]
-        identity = self.module.identity(2, dtype=complex)
-
-        if qubit == 0:
-            applied_gate = pauli_y
-        else:
-            applied_gate = identity
-        for i in range(1, self.qubits):
-            if i == qubit:
-                applied_gate = self.module.kron(applied_gate, pauli_y)
-            else:
-                applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = self.__single_qubit_gate(pauli_y, qubit) @ self.__state
     
     def pauli_z(self, qubit: int) -> None:
-        if qubit < 0 or qubit >= self.qubits:
-            raise StateError(str(qubit))
+        self.__check_qubit(qubit)
         
         pauli_z = gates.GATES[self.device]["PAULI_Z"]
-        identity = self.module.identity(2, dtype=complex)
-
-        if qubit == 0:
-            applied_gate = pauli_z
-        else:
-            applied_gate = identity
-        for i in range(1, self.qubits):
-            if i == qubit:
-                applied_gate = self.module.kron(applied_gate, pauli_z)
-            else:
-                applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = self.__single_qubit_gate(pauli_z, qubit) @ self.__state
     
     def cnot(self, control: int, target: int) -> None:
         if control < 0 or control >= self.qubits:
@@ -140,7 +116,7 @@ class Runtime:
                 applied_gate = self.module.kron(applied_gate, cnot)
             else:
                 applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = applied_gate @ self.__state
     
     def swap(self, qubit1: int, qubit2: int) -> None:
         if qubit1 < 0 or qubit1 >= self.qubits:
@@ -160,7 +136,7 @@ class Runtime:
                 applied_gate = self.module.kron(applied_gate, swap)
             else:
                 applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = applied_gate @ self.__state
     
     def toffoli(self, control1: int, control2: int, target: int) -> None:
         if control1 < 0 or control1 >= self.qubits:
@@ -182,7 +158,7 @@ class Runtime:
                 applied_gate = self.module.kron(applied_gate, toffoli)
             else:
                 applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = applied_gate @ self.__state
     
     def cswap(self, control: int, target1: int, target2: int) -> None:
         if control < 0 or control >= self.qubits:
@@ -204,4 +180,4 @@ class Runtime:
                 applied_gate = self.module.kron(applied_gate, cswap)
             else:
                 applied_gate = self.module.kron(applied_gate, identity)
-        self.state = applied_gate @ self.state
+        self.__state = applied_gate @ self.__state
