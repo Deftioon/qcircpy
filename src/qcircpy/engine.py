@@ -1,231 +1,207 @@
-if __name__ == "__main__":
-    import quantum, gates, circuits
-    from exceptions import *
-else:
-    from . import quantum, gates, circuits
-    from .exceptions import *
-    
-import time
-import typing
+from .exceptions import *
+from . import gates
 
-class Engine:
-    """
-    The Engine class represents a quantum computing engine.
+import numpy as np
+import cupy as cp
 
-    Args:
-        device (str): The device to be used for computation. Must be either "cpu" or "gpu".
-        clock (float): The clock speed of the device in Hz.
-
-    Raises:
-        DeviceError: If an invalid device is provided.
-
-    Attributes:
-        device (str): The device used for computation.
-        clock (float): The clock speed of the device.
-        hadamard: The Hadamard gate.
-        x: The Pauli-X gate.
-        y: The Pauli-Y gate.
-        z: The Pauli-Z gate.
-        t: The T gate.
-        cnot: The controlled-NOT gate.
-        cz: The controlled-Z gate.
-        swap: The SWAP gate.
-        ccnot: The doubly-controlled-NOT gate.
-    """
-
-    def __init__(self, device: str, clock: int):
+class Runtime:
+    def __init__(self, state: str = "0", device: str = "cpu") -> None:
+        self.space = 2 ** len(state)
+        self.qubits = len(state)
         self.device = device
-        self.clock = clock
-
         if device != "cpu" and device != "gpu":
             raise DeviceError(device)
-
-    def Qubit(self, base_state: str) -> quantum.Qubit:
-        """
-        Create a qubit with the given base state.
-
-        Args:
-            base_state: The base state of the qubit.
-
-        Returns:
-            quantum.Qubit: The created qubit.
-        """
-        return quantum.Qubit(base_state, self.device)
-    
-    def Wire(self, *args: gates.Gate) -> circuits.Wire:
-        """
-        Create a wire with the given gates.
-
-        Args:
-            *args: The gates to be applied to the wire.
-
-        Returns:
-            circuits.Wire: The created wire.
-        """
-        return circuits.Wire(self.device, *args)
-    
-    def Connection(self, gate: gates.Gate, *args: circuits.Wire):
-        """
-        Create a connection with the given gate and wires.
-
-        Args:
-            gate: The gate to be applied in the connection.
-            *args: The wires to be connected.
-
-        Returns:
-            circuits.Connection: The created connection.
-        """
-        return circuits.Connection(self.device, gate, *args)
-
-    def RAM(self, *args: quantum.Qubit):
-        """
-        Create a Quantum RAM instance with Qubits stored.
-
-        Args:
-            *args: The Qubits to be stored in the RAM.
+        elif device == "cpu":
+            self.module = np
+        elif device == "gpu":
+            self.module = cp
         
-        Returns:
-            quantum.RAM: The created RAM instance.
-        """
-        return quantum.RAM(self.device, *args)
+        if state[0] == "1":
+            output = self.module.array([[0], [1]], dtype=complex)
+        elif state[0] == "0":
+            output = self.module.array([[1], [0]], dtype=complex)
+
+        for i, bit in enumerate(state[1:]):
+            if bit == "1":
+                qubit = self.module.array([[0], [1]], dtype=complex)
+            elif bit == "0":
+                qubit = self.module.array([[1], [0]], dtype=complex)
+            else:
+                raise StateError(state)
+            output = self.module.kron(output, qubit)
+        
+        self.state = output
     
-    def hadamard(self, space: int = 1) -> gates.Gate:
-        """
-        Get the Hadamard gate.
+    def measure(self) -> str:
+        probabilities = np.abs(self.state) ** 2
+        probabilities = probabilities.flatten()
+        output_states = [str(i) for i in range(len(probabilities))]
+        output = np.random.choice(output_states, p=probabilities)
+        self.state = self.module.zeros((2 ** self.qubits, 1), dtype=complex)
+        self.state[int(output),0] = 1
+        output = bin(int(output))[2:]
+        return output
 
-        Returns:
-            The Hadamard gate.
-        """
-        return gates.GATE_DICT[self.device]["hadamard"].extend_matrix_space(space)
+    def measure_no_reset(self) -> str:
+        probabilities = np.abs(self.state) ** 2
+        probabilities = probabilities.flatten()
+        output_states = [str(i) for i in range(len(probabilities))]
+        output = np.random.choice(output_states, p=probabilities)
+        output = bin(int(output))[2:]
+        return output
     
-    def x(self, space: int = 1) -> gates.Gate:
-        """
-        Get the Pauli-X gate.
+    def hadamard(self, qubit: int) -> None:
+        if qubit < 0 or qubit >= self.qubits:
+            raise StateError(str(qubit))
+        
+        hadamard = gates.GATES[self.device]["HADAMARD"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The Pauli-X gate.
-        """
-        return gates.GATE_DICT[self.device]["x"].extend_matrix_space(space)
+        if qubit == 0:
+            applied_gate = hadamard
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits):
+            if i == qubit:
+                applied_gate = self.module.kron(applied_gate, hadamard)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def y(self, space: int = 1) -> gates.Gate:
-        """
-        Get the Pauli-Y gate.
+    def pauli_x(self, qubit: int) -> None:
+        if qubit < 0 or qubit >= self.qubits:
+            raise StateError(str(qubit))
+        
+        pauli_x = gates.GATES[self.device]["PAULI_X"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The Pauli-Y gate.
-        """
-        return gates.GATE_DICT[self.device]["y"].extend_matrix_space(space)
+        if qubit == 0:
+            applied_gate = pauli_x
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits):
+            if i == qubit:
+                applied_gate = self.module.kron(applied_gate, pauli_x)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def z(self, space: int = 1) -> gates.Gate:
-        """
-        Get the Pauli-Z gate.
+    def pauli_y(self, qubit: int) -> None:
+        if qubit < 0 or qubit >= self.qubits:
+            raise StateError(str(qubit))
+        
+        pauli_y = gates.GATES[self.device]["PAULI_Y"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The Pauli-Z gate.
-        """
-        return gates.GATE_DICT[self.device]["z"].extend_matrix_space(space)
+        if qubit == 0:
+            applied_gate = pauli_y
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits):
+            if i == qubit:
+                applied_gate = self.module.kron(applied_gate, pauli_y)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def t(self, space: int = 1) -> gates.Gate:
-        """
-        Get the T gate.
+    def pauli_z(self, qubit: int) -> None:
+        if qubit < 0 or qubit >= self.qubits:
+            raise StateError(str(qubit))
+        
+        pauli_z = gates.GATES[self.device]["PAULI_Z"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The T gate.
-        """
-        return gates.GATE_DICT[self.device]["t"].extend_matrix_space(space)
+        if qubit == 0:
+            applied_gate = pauli_z
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits):
+            if i == qubit:
+                applied_gate = self.module.kron(applied_gate, pauli_z)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def cnot(self, space: int = 2) -> gates.Gate:
-        """
-        Get the controlled-NOT gate.
+    def cnot(self, control: int, target: int) -> None:
+        if control < 0 or control >= self.qubits:
+            raise StateError(str(control))
+        if target < 0 or target >= self.qubits:
+            raise StateError(str(target))
+        
+        cnot = gates.GATES[self.device]["CNOT"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The controlled-NOT gate.
-        """
-        return gates.GATE_DICT[self.device]["cnot"].extend_matrix_space(space)
+        if control == 0:
+            applied_gate = cnot
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits-1):
+            if i == control:
+                applied_gate = self.module.kron(applied_gate, cnot)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def cz(self, space: int = 2) -> gates.Gate:
-        """
-        Get the controlled-Z gate.
+    def swap(self, qubit1: int, qubit2: int) -> None:
+        if qubit1 < 0 or qubit1 >= self.qubits:
+            raise StateError(str(qubit1))
+        if qubit2 < 0 or qubit2 >= self.qubits:
+            raise StateError(str(qubit2))
+        
+        swap = gates.GATES[self.device]["SWAP"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The controlled-Z gate.
-        """
-        return gates.GATE_DICT[self.device]["cz"].extend_matrix_space(space)
+        if qubit1 == 0:
+            applied_gate = swap
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits-1):
+            if i == qubit1:
+                applied_gate = self.module.kron(applied_gate, swap)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def swap(self, space: int = 2) -> gates.Gate:
-        """
-        Get the SWAP gate.
+    def toffoli(self, control1: int, control2: int, target: int) -> None:
+        if control1 < 0 or control1 >= self.qubits:
+            raise StateError(str(control1))
+        if control2 < 0 or control2 >= self.qubits:
+            raise StateError(str(control2))
+        if target < 0 or target >= self.qubits:
+            raise StateError(str(target))
+        
+        toffoli = gates.GATES[self.device]["TOFFOLI"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The SWAP gate.
-        """
-        return gates.GATE_DICT[self.device]["swap"].extend_matrix_space(space)
+        if control1 == 0:
+            applied_gate = toffoli
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits-2):
+            if i == control1:
+                applied_gate = self.module.kron(applied_gate, toffoli)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
     
-    def ccnot(self, space: int = 3) -> gates.Gate:
-        """
-        Get the doubly-controlled-NOT gate.
+    def cswap(self, control: int, target1: int, target2: int) -> None:
+        if control < 0 or control >= self.qubits:
+            raise StateError(str(control))
+        if target1 < 0 or target1 >= self.qubits:
+            raise StateError(str(target1))
+        if target2 < 0 or target2 >= self.qubits:
+            raise StateError(str(target2))
+        
+        cswap = gates.GATES[self.device]["CSWAP"]
+        identity = self.module.identity(2, dtype=complex)
 
-        Returns:
-            The doubly-controlled-NOT gate.
-        """
-        return gates.GATE_DICT[self.device]["ccnot"].extend_matrix_space(space)
-    
-    def identity(self, space:int = 1):
-        """
-        Get the identity gate.
-
-        Returns:
-            The identity gate.
-        """
-        return gates.GATE_DICT[self.device]["identity"].extend_matrix_space(space)
-
-    def run(self, circuit: circuits.Wire | circuits.Connection):
-        """
-        Execute the given circuit.
-
-        Args:
-            circuit: The circuit to be executed.
-
-        Returns:
-            function: The execute function.
-        """
-        def execute(data: quantum.Qubit) -> quantum.Qubit | None:
-            qubit = data.to_device(self.device)
-            circ = circuit.to_device(self.device)
-            return circuit.parse(qubit)
-        return execute
-
-    def benchmark(self, circuit: circuits.Wire | circuits.Connection):
-        """
-        Execute the given circuit and print benchmark information.
-
-        Args:
-            circuit: The circuit to be executed.
-
-        Returns:
-            function: The execute function.
-        """
-        @timer
-        def execute(data: quantum.Qubit) -> quantum.Qubit:
-            if isinstance(circuit, circuits.Wire):
-                qubit = data.to_device(self.device)
-                gates = len(circuit.gates)
-                print(f"Wire took {gates} gates. At {self.clock}Hz, it will take {gates/self.clock: .2f}s.", end = " ")
-                return circuit.parse(qubit)
-            
-            if isinstance(circuit, circuits.Connection):
-                qcirc = circuit.to_device(self.device)
-                qubit = data.to_device(self.device)
-                gates = sum([len(i.gates) for i in qcirc.wires])
-                print(f"Connection took {gates} wires, each of {[len(i.gates) for i in qcirc.wires]}. At {self.clock}Hz, it will take {gates/self.clock: .2f}s.", end = " ")
-                return qcirc.parse(qubit)
-        return execute
-
-def timer(func):
-    def new_func(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        print(f"Execution time: {end - start: .10f}")
-        return result
-    return new_func 
+        if control == 0:
+            applied_gate = cswap
+        else:
+            applied_gate = identity
+        for i in range(1, self.qubits-2):
+            if i == control:
+                applied_gate = self.module.kron(applied_gate, cswap)
+            else:
+                applied_gate = self.module.kron(applied_gate, identity)
+        self.state = applied_gate @ self.state
